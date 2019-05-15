@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:tx="http://www.springframework.org/schema/tx"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+                          http://www.springframework.org/schema/beans/spring-beans.xsd
+                          http://www.springframework.org/schema/context
+                          http://www.springframework.org/schema/context/spring-context.xsd
+                          http://www.springframework.org/schema/tx
+                          http://www.springframework.org/schema/tx/spring-tx.xsd
+                          http://www.springframework.org/schema/aop
+                          http://www.springframework.org/schema/aop/spring-aop.xsd">
+
+    <!-- 1.开启包扫描 -->
+    <!--
+        use-default-filters
+            a)true(默认值):会扫描指定包下面的所有的注解
+            b)false:关闭这种机制
+     -->
+    <context:component-scan base-package="com.yj" use-default-filters="false">
+        <context:include-filter type="annotation" expression="org.springframework.stereotype.Service" />
+    </context:component-scan>
+
+    <!--读取属性文件 -->
+    <context:property-placeholder location="classpath:jdbc.properties"/>
+
+    <!--阿里的连接方式Druid-->
+    <bean name="dataSource" class="com.alibaba.druid.pool.DruidDataSource" init-method="init" destroy-method="close">
+        <property name="driverClassName" value="${jdbc.drivername}" />
+        <property name="url" value="${jdbc.url}" />
+        <property name="username" value="${jdbc.username}" />
+        <property name="password" value="${jdbc.password}" />
+    </bean>
+
+  <!-- Spring和MyBatis的整合 -->
+	<bean id="sqlSessionFactroy" class="org.mybatis.spring.SqlSessionFactoryBean">
+		<!-- 数据源 -->
+		<property name="dataSource" ref="dataSource"/>
+		<!-- MyBatis核心配置文件 -->
+		<property name="configLocation" value="classpath:mybatis-config.xml"/>
+		<!-- MyBatis的Mapper文件 -->
+		<property name="mapperLocations" value="classpath:com/yj/mapper/*.xml"/>
+        <!-- 设置别名 -->
+		<property name="typeAliasesPackage" value="com.yj.entity"></property>
+	</bean>
+
+    <!-- 配置Spring声明式事务 -->
+    <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <property name="dataSource" ref="dataSource"></property>
+    </bean>
+
+    <!-- 事务的策略 -->
+    <tx:advice id="txAdvices" transaction-manager="transactionManager">
+        <tx:attributes>
+                <tx:method name="do*" isolation="DEFAULT" propagation="REQUIRED" read-only="false"/>
+                <tx:method name="get*" isolation="DEFAULT" propagation="REQUIRED" read-only="true" />
+        </tx:attributes>
+    </tx:advice>
+
+    <!-- AOP的配置 -->
+    <aop:config>
+        <aop:advisor advice-ref="txAdvices" pointcut="execution(* com.yj.service.*.*(..))"/>
+    </aop:config>
+
+    <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+        <property name="basePackage" value="com.yj.dao"/>
+        <property name="sqlSessionFactoryBeanName" value="sqlSessionFactroy"/>
+    </bean>
+
+
+</beans>

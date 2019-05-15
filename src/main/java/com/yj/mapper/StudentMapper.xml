@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yj.dao.IStudentMapper">
+    <resultMap id="studentMap" type="Student">
+        <id property="id" column="id"/>
+        <result property="stuName" column="stu_name"/>
+        <result property="password" column="password"/>
+        <result property="age" column="age"/>
+        <result property="sex" column="sex"/>
+        <result property="teaId" column="teaId"/>
+        <result property="teaName" column="teaName"/>
+    </resultMap>
+
+    <select id="getList" resultMap="studentMap">
+        select
+            stu.*,
+            ifnull(tea.name,"无") as teaName,
+            tea.id as teaId
+        from
+            t_student stu
+        left join
+            t_teacher tea
+            on stu.tea_id = tea.id
+    </select>
+
+    <delete id="doDelete">
+        delete from
+            t_student
+        where
+            id=#{id}
+    </delete>
+
+    <select id="getById" resultMap="studentMap">
+        select
+            stu.*,
+            ifnull(tea.name,"无") as teaName,
+            tea.id as teaId
+        from
+            t_student stu
+        left join
+            t_teacher tea
+        on
+            stu.tea_id = tea.id
+        where
+            stu.id=#{id}
+    </select>
+
+    <update id="doUpdate">
+        UPDATE t_student set
+          <if test="stuName != null ||StuName != ''">
+              stu_name=#{StuName},
+          </if>
+    </update>
+
+</mapper>
